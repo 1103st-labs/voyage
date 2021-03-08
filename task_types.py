@@ -90,6 +90,8 @@ class VMap():
             for xx in x.waypoints:
                 if ((xx.due - DAY ) < (time.time())):
                     ret[xx.due] = xx
+        # v cleans out the done tasks
+        ret = {x: ret[x] for x in ret if ret[x].state != ve.Task_State.DONE}
         ret = [(i,ret[i]) for i in sorted(ret)]
         return ret
 
@@ -101,6 +103,7 @@ class VMap():
                 if (not ((xx.due - DAY) < (time.time()))
                     and ((time.time + DAY) > (xx.activation))):
                     ret[xx.due] = xx
+        ret = {x: ret[x] for x in ret if ret[x].state != ve.Task_State.DONE}
         ret = [(i,ret[i]) for i in sorted(ret)]
         return ret
 
@@ -127,12 +130,21 @@ class VMap():
             and (waypoint.state is not ve.Task_State.FAILED)):
             value = waypoint.cal_value()
             self.gold += value[0]
-            self.platinum += value[1]
+            # if there are mandatory tasks left do not give plat.
+            undone = [x for x 
+                      in self.manifest["Mandatory"]["Waypoints"] 
+                      if x.state != ve.Task_State.DONE]
+            if (len(undone) == 0):
+                self.platinum += value[1]
             waypoint.state = ve.Task_State.DONE
         elif (waypoint.state == ve.Task_State.DONE):
             value = waypoint.cal_value()
             self.gold -= value[0]
-            self.platinum -= value[1]
+            undone = [x for x 
+                      in self.manifest["Mandatory"]["Waypoints"] 
+                      if x.state != ve.Task_State.DONE]
+            if (len(undone) == 0):
+                self.platinum -= value[1]
             waypoint.state = state
         else:
             waypoint.state = state
