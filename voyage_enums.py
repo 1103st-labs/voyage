@@ -11,7 +11,8 @@ class Default_Mode_Data(Enum):
 
 class Intent(Enum):
     """used to define what intent a message object was sent with"""
-    DM = auto()
+    HEADING_VIEW = auto()
+    MANIFEST = auto()
 
 
 class Update_Mode(Enum):
