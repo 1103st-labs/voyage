@@ -6,19 +6,25 @@ import discord
 import voyage_enums as ve
 import switchboard as s
 import pickle
-import getopt
-import sys
+import argparse
+import traceback
+import pdb
+
+parser = argparse.ArgumentParser(description='A Text based TODO System.')
+parser.add_argument('save', metavar='S', help='The save name')
+parser.add_argument('key', metavar='K', help='The Bot Key')
+parser.add_argument('-n', help='Start with a fresh save?',
+                    action='store_true')
+args = vars(parser.parse_args())
 
 client = discord.Client()
-alocated_intents = []
+alocated_intents = {}
 e_count = 0
 
-args, remaining = getopt.getopt(sys.argv[1:], "s:k::n")
-key = [x for x in args if x[0] == "k"][0][1]
-if [x for x in args if x[0] == "n"][0][1]:
-    switchboard = s.Switch_Board()
+if (args["n"]):
+    switchboard = s.Switch_Board(args["save"])
 else:
-    with open([x for x in args if x[0] == "s"][0][1], "rb") as f:
+    with open(args["save"]) as f:
         switchboard = pickle.load(f)
 
 
@@ -33,29 +39,38 @@ async def on_message(message):
     if message.author == client.user:
         return
     try:
-        t = message.content.lower().split(' ')
-        if message.content.startswith('>set'):
+        t = message.content.split(' ')
+        if (message.content.startswith('>set')):
+            if (len(t) != 2):
+                await e_msg.reply("ERR: Bad number of args")
+                return
             if (t[1] in ve.Intent.__members__):
                 alocated_intents[message.channel.id] = \
                         ve.Intent.__members__[t[1]]
                 await message.channel.send(f'Set intent to {t[1]}')
+            else:
+                await e_msg.reply("ERR: Not a valid Intent")
+            return
+        t = message.content.lower().split(' ')
         if (message.channel.id in alocated_intents):
             switchboard.run_program(message, t,
                                     alocated_intents[message.channel.id],
                                     message.author)
+            return
     except Exception as e:
-        global e_count
-        e_count += 0
-        print(e)
-        tmp = switchboard.name + str(e_count)
+        switchboard.e_count += 0
+        traceback.print_exc()
+        tmp = switchboard.name + \
+            str(switchboard.e_count)
         print(tmp)
         switchboard.name = tmp
         try:
             await e_msg.reply(str(e) + "\n" + str(tmp))
         except Exception as e:
             print("Could not send error via reply.")
+        pdb.set_trace()
     finally:
         switchboard.save_state()
 
 
-client.run(key)
+client.run(args["key"])

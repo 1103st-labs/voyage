@@ -4,29 +4,31 @@ any"""
 import voyage_enums
 import time
 import pickle
-import voyage_programs
+import voyage_programs.h_manager as h
+import voyage_programs.m_manager as m
 import voyage_core as vc
 
 
 class User():
     """Used to represent the users account"""
     data = {}  # holds a users data...
-    active_intents = {name: None for name, member in
-                      voyage_enums.Intents._members_.items()}
+    active_intents = {member: None for name, member in
+                      voyage_enums.Intent.__members__.items()}
     # ^ mount points for programs
 
     def __init__(self, username: "the username of the account allocated"):
         """makes the user...."""
         self.data["USER"] = username
-        self.data["VMAP"] = vc.VMap(User=self)
+        self.data["VMAP"] = vc.VMap(user=self)
 
 
 class Switch_Board():
     """The switchboard proper, there should be one of these per system. The
     primary account manager and save state manager."""
-    users = {}  # of the form {"username with tag": user-account}
-    programs = voyage_programs.__dict__
+    users = {}
+    programs = p
     schedule = {}  # of the from {time.time() obj: func}
+    e_count = 0
 
     def __init__(self, name):
         """sets the name for the switchboard"""
@@ -45,8 +47,8 @@ class Switch_Board():
                 # if they have an active program at intent
                 self.users[u].active_intents[i].msg_q.put(m)
             else:  # start a new program
-                tmp_program = t.split(' ')[0]
-                if (tmp_program in self.program.keys()):
+                tmp_program = t[0]
+                if (tmp_program in self.programs.keys()):
                     self.users[u].active_intents[i] = \
                             self.programs[tmp_program](m, t, i, self.users[u])
                 else:
@@ -54,13 +56,13 @@ class Switch_Board():
                     pass
 
         else:  # add new user
-            self.adduser(u)
-            self.run_program(self, m, t, i, u)  # TODO add recursion depth ck
+            self.add_user(u)
+            self.run_program(m, t, i, u)  # TODO add recursion depth ck
 
     def add_user(self, u: "the string name of the user"):
         """adds a user to the known accounts"""
         # TODO send back help text
-        self.users.append(User(u))
+        self.users[u] = (User(u))
 
     def save_state(self, name: "optional path to save to" = None):
         """saves the state of the Switch_Board obj as a pickle"""
