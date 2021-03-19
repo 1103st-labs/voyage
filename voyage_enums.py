@@ -1,6 +1,7 @@
 """Contains all of the defined enums of the project"""
 from enum import Enum, auto
 
+DAY = 86400
 
 class Default_Mode_Data(Enum):
     ICAL = {"URL": "www.nasa.gov/templateimages/redesign/calendar/iCal/nasa_calendar.ics",

@@ -5,6 +5,7 @@ import voyage_enums
 import time
 import pickle
 import voyage_programs
+import voyage_core as vc
 
 
 class User():
@@ -16,7 +17,8 @@ class User():
 
     def __init__(self, username: "the username of the account allocated"):
         """makes the user...."""
-        self.data["user"] = username
+        self.data["USER"] = username
+        self.data["VMAP"] = vc.VMap(User=self)
 
 
 class Switch_Board():
@@ -26,19 +28,22 @@ class Switch_Board():
     programs = voyage_programs.__dict__
     schedule = {}  # of the from {time.time() obj: func}
 
+    def __init__(self, name):
+        """sets the name for the switchboard"""
+        self.name = name
+
     def run_program(self, m: "The dis mesg obj",
                     t: "sanitized text message",
                     i: "The intent of the msg, see enum",
                     u: "the users username from the message"):
-        """Runns through the array of users and checks to see if they have a
-        program running in the stated intent. if they do the message is passed
+        """Runs through the array of users and checks to see if they have a
+        program running in the stated intent. If they do the message is passed
         to it, otherwise the program is started and added to there account at
         that intent"""
         if (u in self.users):  # if they have an account
             if (self.users[u].active_intents[i] is not None):
                 # if they have an active program at intent
-                self.users[u].active_intents[i].msg_q.append(m)
-                next(self.users[u].active_intents[i].program)
+                self.users[u].active_intents[i].msg_q.put(m)
             else:  # start a new program
                 tmp_program = t.split(' ')[0]
                 if (tmp_program in self.program.keys()):
@@ -57,8 +62,9 @@ class Switch_Board():
         # TODO send back help text
         self.users.append(User(u))
 
-    def save_state(self, name: "optional path to save to" = self.save_name):
+    def save_state(self, name: "optional path to save to" = None):
         """saves the state of the Switch_Board obj as a pickle"""
+        name = name if (name is not None) else self.name
         with open(name, "wb+") as f:
             pickle.dump(self, f)
 
@@ -67,12 +73,3 @@ class Switch_Board():
         self.save_state(self.name + "_backup_" +
                         time.asctime(time.gmtime()).replace(" ", "_"))
 
-    def schedule_funct(self, func: "the function to schedule",
-                       time: "the time.time object to use"
-                       = None,
-                       delta: "how many minutes into the future"
-                       = None):
-        """Adds a funtion to be called at time+delta minutes into the future or
-        at time"""
-        # TODO add seched funct and handeler in main
-        pass
