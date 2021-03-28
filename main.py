@@ -51,24 +51,31 @@ async def on_message(message):
             else:
                 await e_msg.reply("ERR: Not a valid Intent")
             return
+        if (message.content.startswith('>dbg')):
+            raise Exception("DBG CALLED")
         t = message.content.lower().split(' ')
         if (message.channel.id in alocated_intents):
-            switchboard.run_program(message, t,
+            await switchboard.run_program(message, t,
                                     alocated_intents[message.channel.id],
                                     message.author)
             return
     except Exception as e:
-        switchboard.e_count += 0
         traceback.print_exc()
-        tmp = switchboard.name + \
-            str(switchboard.e_count)
-        print(tmp)
-        switchboard.name = tmp
+        if not(type(e) == ve.NoSaveErr):
+            switchboard.e_count += 0
+            tmp = switchboard.name + \
+                str(switchboard.e_count)
+            print(tmp)
+            switchboard.name = tmp
+            try:
+                await e_msg.reply(str(e) + "\n" + str(tmp))
+                pdb.set_trace()
+            except Exception as e:
+                print("Could not send error via reply.")
         try:
-            await e_msg.reply(str(e) + "\n" + str(tmp))
+            await e_msg.reply(str(e))
         except Exception as e:
             print("Could not send error via reply.")
-        pdb.set_trace()
     finally:
         switchboard.save_state()
 

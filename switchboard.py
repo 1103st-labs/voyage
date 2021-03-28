@@ -7,6 +7,7 @@ import pickle
 import voyage_programs.h_manager as h
 import voyage_programs.m_manager as m
 import voyage_core as vc
+import voyage_enums as ve
 
 
 class User():
@@ -26,7 +27,7 @@ class Switch_Board():
     """The switchboard proper, there should be one of these per system. The
     primary account manager and save state manager."""
     users = {}
-    programs = p
+    programs = {"h": h.h_manager, "m": m.make_manifest}
     schedule = {}  # of the from {time.time() obj: func}
     e_count = 0
 
@@ -34,7 +35,7 @@ class Switch_Board():
         """sets the name for the switchboard"""
         self.name = name
 
-    def run_program(self, m: "The dis mesg obj",
+    async def run_program(self, m: "The dis mesg obj",
                     t: "sanitized text message",
                     i: "The intent of the msg, see enum",
                     u: "the users username from the message"):
@@ -51,13 +52,15 @@ class Switch_Board():
                 if (tmp_program in self.programs.keys()):
                     self.users[u].active_intents[i] = \
                             self.programs[tmp_program](m, t, i, self.users[u])
+                    await self.users[u].active_intents[i].main_loop(m)
                 else:
-                    # TODO send back error about not a program
+                    # NOTE THIS IS A HACK THAT SHOULD BE FIXED
+                    raise ve.NoSaveErr("Not a valid program.")
                     pass
 
         else:  # add new user
             self.add_user(u)
-            self.run_program(m, t, i, u)  # TODO add recursion depth ck
+            await self.run_program(m, t, i, u)  # TODO add recursion depth ck
 
     def add_user(self, u: "the string name of the user"):
         """adds a user to the known accounts"""

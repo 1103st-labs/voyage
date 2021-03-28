@@ -3,6 +3,11 @@ from enum import Enum, auto
 
 DAY = 86400
 
+
+class NoSaveErr(Exception):
+    pass
+
+
 class Default_Mode_Data(Enum):
     ICAL = {"URL": "www.nasa.gov/templateimages/redesign/calendar/iCal/nasa_calendar.ics",
             "Filter": ".*",

@@ -66,25 +66,33 @@ class Heading():
 
     def sync(self):
         """useed the mode specified in self.mode to update the waypoints"""
-        if (self.mode == ve.Update_Mode.ICAL):
+        if (True): # NOTE TEMP HACK
             tmp_events = events(self.mode_data["URL"])
             for x in tmp_events:
                 if (re.search(self.mode_data["Filter"], x.summary)):
                     des = x.summary
-                    due = None
-                    cost = None
-                    activation = None
+                    due = 0
+                    cost = 0
+                    activation = 0
                     # NOTE Shoul this be the compile command?
-                    exec(self.mode_data["TimeRule"],
-                         " ", {"cal_event": x,
-                               "description": des,
-                               "due": due,
-                               "cost": cost,
-                               "activation": activation})
+                    # I Have switched this off to male this work
+                    # TODO switch this back on AND Make it work
+                   # exec(self.mode_data["TimeRule"],
+                   #      {"__builtins__": __builtins__,
+                   #       "ve": ve, 
+                   #       "cal_event": x,
+                   #        "description": des,
+                   #        "due": due,
+                   #        "cost": cost,
+                   #        "activation": activation})
+                    cal_event = x
+                    import voyage_enums as ve
+                    l = locals()
+                    exec(self.mode_data["TimeRule"], globals(), l)
                     # TODO Check return types
-                    self.waypoints.append(Waypoint(des, due,
-                                                   self, activation,
-                                                   cost))
+                    self.waypoints.append(Waypoint(l["des"], l["due"],
+                                                   self, l["activation"],
+                                                   l["cost"]))
 
 
 class VMap():
@@ -109,7 +117,7 @@ class VMap():
         """updatess all known waypoints"""
         for x in self.headings:
             x.sync()
-            for xx in x.Waypoint:
+            for xx in x.waypoints:
                 xx.update_state()
 
     def get_mandatory(self):
@@ -130,7 +138,7 @@ class VMap():
         for x in self.headings:
             for xx in x.waypoints:
                 if (not ((xx.due - DAY) < (time.time()))
-                    and ((time.time + DAY) > (xx.activation))):
+                    and ((time.time() + DAY) > (xx.activation))):
                     ret[xx.due] = xx
         ret = {x: ret[x] for x in ret if ret[x].state != ve.Task_State.DONE}
         ret = [(i, ret[i]) for i in sorted(ret)]
@@ -161,7 +169,7 @@ class VMap():
             # if there are mandatory tasks left do not give plat.
             undone = [x for x
                       in self.manifest["Mandatory"]["Waypoints"]
-                      if x.state != ve.Task_State.DONE]
+                      if x[1].state != ve.Task_State.DONE]
             if (len(undone) == 0):
                 self.platinum += value[1]
             waypoint.state = ve.Task_State.DONE
@@ -170,7 +178,7 @@ class VMap():
             self.gold -= value[0]
             undone = [x for x
                       in self.manifest["Mandatory"]["Waypoints"]
-                      if x.state != ve.Task_State.DONE]
+                      if x[1].state != ve.Task_State.DONE]
             if (len(undone) == 0):
                 self.platinum -= value[1]
             waypoint.state = state
