@@ -6,7 +6,7 @@ See the README in the main branch on what the voyage TODO system is.
 
 ## Setup
 1. Clone and switch into this branch.
-2. Setup a google [apps password][https://support.google.com/accounts/answer/185833?hl=en] (this is necessary because google does not provide an official keep API).
+2. Setup a google [apps password](https://support.google.com/accounts/answer/185833?hl=en) (this is necessary because google does not provide an official keep API).
 3. Configure your sync.py see the config section.
 4. Run `python3 voyage.py "<gmail_email>" "<app_password>"`
 
