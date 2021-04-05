@@ -27,6 +27,8 @@ k.sync()
 # Main Sync Loop
 while(True):
     try:
+        k.sync()
+        old_time = datetime.datetime.now()
         # Generate old and new headings
         importlib.reload(sync)
         headings = {x: k.findLabel(x, create=True) for x in sync.HEADINGS}
@@ -43,11 +45,14 @@ while(True):
         # sync
         for w in manifest:
             if (w.hash in old_hash.keys()):
-                k.sync()
+                if (datetime.datetime.now() > (datetime.timedelta(seconds=30) + old_time)):
+                    k.sync()
+                    old_time = datetime.datetime.now()
                 old = old_hash[w.hash]
                 if (old.archived):
                     if not(old.labels.get(k.findLabel("DONE", create=True))):
                         old.labels.add(k.findLabel("DONE", create=True))
+                        old_time = datetime.datetime.now()
                         k.sync()
                 else:
                     old.text = w.gen_sum()
@@ -105,3 +110,8 @@ while(True):
         print(e)
         print('ERR: Keep api had a stroke....')
         pass
+   # except exception.APIException as e:
+   #     print(e)
+   #     time.sleep(60 * 10)
+   #     print('ERR: Keep api had a stroke....')
+   #     pass
